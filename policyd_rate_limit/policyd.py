@@ -232,7 +232,10 @@ class Policyd(object):
 
             sys.stderr.write("%s: exact match\n" % (sender))
             sys.stderr.flush()
-            return l
+            if len(l) > 0:
+                return l
+            else:
+                return default
 
         """ Suffix match """
         for x in custom:
@@ -253,7 +256,10 @@ class Policyd(object):
 
                 sys.stderr.write("%s: %s match\n" % (sender, x))
                 sys.stderr.flush()
-                return l
+                if len(l) > 0:
+                    return l
+                else:
+                    return default
 
         """ No match, return default """
         sys.stderr.write("%s for %s: default match\n" % (sender, recipient))
