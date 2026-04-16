@@ -211,6 +211,62 @@ class Policyd(object):
             sys.stderr.flush()
             self.close_connection(connection)
 
+    def get_limits(self, sender, recipient, custom, default):
+        """ Allow for substring (domain of mail etc.) match for limits_by_id"""
+
+        """ Exact match """
+        if sender in custom.keys():
+            l = list();
+            for r in custom[sender]:
+                if type(r).__name__ == 'dict':
+                    if [*r][0] == recipient:
+                        sys.stderr.write("%s for %s: exact/exact match\n" % (sender, recipient))
+                        sys.stderr.flush()
+                        return list(r.values())[0]
+                    if recipient.endswith([*r][0]):
+                        sys.stderr.write("%s for %s: exact/substr match\n" % (sender, recipient))
+                        sys.stderr.flush()
+                        return list(r.values())[0]
+                else:
+                    l.append(r)
+
+            sys.stderr.write("%s: exact match\n" % (sender))
+            sys.stderr.flush()
+            if len(l) > 0:
+                return l
+            else:
+                return default
+
+        """ Suffix match """
+        for x in custom:
+            if sender.endswith(x):
+                l = list();
+                for r in custom[x]:
+                    if type(r).__name__ == 'dict':
+                        if [*r][0] == recipient:
+                            sys.stderr.write("%s for %s: substr/exact match\n" % (sender, recipient))
+                            sys.stderr.flush()
+                            return list(r.values())[0]
+                        if recipient.endswith([*r][0]):
+                            sys.stderr.write("%s for %s: substr/substr match\n" % (sender, recipient))
+                            sys.stderr.flush()
+                            return list(r.values())[0]
+                    else:
+                        l.append(r)
+
+                sys.stderr.write("%s: %s match\n" % (sender, x))
+                sys.stderr.flush()
+                if len(l) > 0:
+                    return l
+                else:
+                    return default
+
+        """ No match, return default """
+        sys.stderr.write("%s for %s: default match\n" % (sender, recipient))
+        sys.stderr.flush()
+        return default
+
+
     def action(self, connection, request):
         """Called then the client has sent an empty line"""
         id = None
@@ -267,10 +323,10 @@ class Policyd(object):
 
                     # if user is authenticated, we filter by sasl username
                     if config.limit_by_sasl and u'sasl_username' in request:
-                        id = request[u'sasl_username']
+                        id = request[u'sasl_username'].lower()
                     # else, if activated, we filter by sender
                     elif config.limit_by_sender and u'sender' in request:
-                        id = request[u'sender']
+                        id = request[u'sender'].lower()
                     # else, if activated, we filter by ip source addresse
                     elif (
                         config.limit_by_ip and
@@ -306,10 +362,14 @@ class Policyd(object):
                         sys.stderr.write(u"Custom limit(s): %s\n" % custom_limits)
                         sys.stderr.flush()
 
+                    recipient='unknown'
+                    if u'recipient' in request:
+                        recipient = request['recipient'].lower()
+
                     # Here we are limiting against sasl username, sender or source ip addresses.
                     # for each limit periods, we count the number of mails already send.
                     # if the a limit is reach, we change action to fail (deny the mail).
-                    for mail_nb, delta in custom_limits.get(id, config.limits):
+                    for mail_nb, delta in self.get_limits(id, recipient, custom_limits, config.limits):
                         cur.execute(
                             (
                                 "SELECT SUM(recipient_count) FROM mail_count "

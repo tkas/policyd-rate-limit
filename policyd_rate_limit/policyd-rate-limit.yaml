@@ -52,6 +52,20 @@ limits:
 #     192.168.0.254:
 #         - [1000, 86400] # limits to 1000 mails by days
 #     2a01:240:fe3d:4:219:bbff:fe3c:4f76: []
+#
+#     'foo':   -- sender
+#          - 'bar@example.com': -- recipient with previous sender
+#              - [100, 181]
+#              - [1000, 86401]
+#          - '@gmail.com': -- different wildcard recipient with previous sender
+#              - [100, 182]
+#              - [1000, 86402]
+#          - [100, 180]     -- limits for sender and all other recipients
+#          - [1000, 86400]
+#     '@bar.org':   -- wildcard sender
+#          - [100, 180]     -- limits for sender and all other recipients
+#          - [1000, 86400]
+#
 limits_by_id: {}
 
 # Use custom rate limit for every user, if you have sql backend for your mail server.
