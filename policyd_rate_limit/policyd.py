@@ -324,6 +324,9 @@ class Policyd(object):
                     # if user is authenticated, we filter by sasl username
                     if config.limit_by_sasl and u'sasl_username' in request:
                         id = request[u'sasl_username'].lower()
+                        # if mail_domain is set in config file, create a mail id instead of just SASL user
+                        if config.mail_domain != "":
+                            id = id + "@" + config.mail_domain
                     # else, if activated, we filter by sender
                     elif config.limit_by_sender and u'sender' in request:
                         id = request[u'sender'].lower()

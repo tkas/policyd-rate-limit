@@ -37,6 +37,12 @@ SOCKET: "/var/spool/postfix/ratelimit/policy"
 # Permissions on the unix socket (if unix socket used).
 socket_permission: 0666
 
+# Own domain - to try to append to SASL username for ID in custom limit tests
+# allows to match authenticated users via generic suffic rulex e.g.
+# user@own_domain.com -> @own_domain.com:
+# user@auth.own_domain -> @auth.own_domain:
+mail_domain: "own_domain.com"
+
 # A list of couple [number of emails, number of seconds]. If one of the element of the list is
 # exeeded (more than 'number of emails' on 'number of seconds' for an ip address or an sasl
 # username), postfix will return a temporary failure.
